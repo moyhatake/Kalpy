@@ -1,6 +1,33 @@
 from tkinter import *
+import tkinter.font as tkFont
 
-margin = 7
+# Responsive dimensions based on screen size
+def get_responsive_dimensions():
+    root = Tk()
+    root.withdraw()
+    screen_width = root.winfo_screenwidth()
+    root.destroy()
+    
+    # Reference size aspect for UI
+    base_width = 320
+    base_height = 490
+    
+    # Scale based on screen size (minimum 1.0, maximum 2.0)
+    scale_factor = min(max(screen_width / 1920, 0.8), 2.0)
+    
+    # Responsive dimensions
+    return {
+        'window_width': int(base_width * scale_factor),
+        'window_height': int(base_height * scale_factor),
+        'margin': int(7 * scale_factor),
+        'button_size': int(78 * scale_factor),
+        'font_size': max(int(14 * scale_factor), 10),
+        'display_font_size': max(int(26 * scale_factor), 16),
+        'history_font_size': max(int(13 * scale_factor), 10)
+    }
+
+dims = get_responsive_dimensions()
+
 max_len = 14
 colors = {
     'dark': '#202020',
@@ -18,15 +45,20 @@ class Kalpy:
         self.root.title("Kalpy")
         self.root.config(bg=colors['dark'])
         
+        # Use responsive dimensions
+        window_width = dims['window_width']
+        window_height = dims['window_height']
+        
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        x = (screen_width // 2) - (320 // 2)
-        y = (screen_height // 2) - (490 // 2)
+        x = (screen_width // 2) - (window_width // 2)
+        y = (screen_height // 2) - (window_height // 2)
         
-        self.root.geometry(f"{320}x{490}+{x}+{y}")
+        self.root.geometry(f"{window_width}x{window_height}+{x}+{y}")
         self.root.resizable(False, False)
         try:
-            self.root.iconbitmap('src/appicon.ico')
+            icon_image = PhotoImage(file='src/logo.png')
+            root.iconphoto(True, icon_image)
         except:
             pass
 
@@ -42,17 +74,19 @@ class Kalpy:
         self.div_check = False
         self.calculated = False
 
-		# History text area
-        self.history = Text(root, bd=0, width=34, height=1, font=('sans-serif', 13), bg=colors['dark'], fg=colors['semi-light'], wrap='none', padx=0, pady=2)
+        # History text area
+        history_font = ('sans-serif', dims['history_font_size'])
+        self.history = Text(root, bd=0, width=34, height=1, font=history_font, bg=colors['dark'], fg=colors['semi-light'], wrap='none', padx=0, pady=2)
         self.history.tag_configure('tag-right', justify='right')
-        self.history.place(x=margin, y=margin+1)
+        self.history.grid(row=0, column=0, columnspan=4, sticky="ew", padx=dims['margin'], pady=(dims['margin'], 0))
         self.history.config(state=DISABLED)
         
         # Main text area
-        self.entry = Text(root, bg=colors['dark'], fg=colors['light'], bd=0, width=16, height=1, font=('sans-serif', 26, 'bold'), wrap='none', padx=1, pady=2)
+        display_font = ('sans-serif', dims['display_font_size'], 'bold')
+        self.entry = Text(root, bg=colors['dark'], fg=colors['light'], bd=0, width=16, height=1, font=display_font, wrap='none', padx=1, pady=2)
         self.entry.tag_configure('tag-right', justify='right')
         self.entry.insert('end', '0', 'tag-right')
-        self.entry.place(x=margin, y=39)
+        self.entry.grid(row=1, column=0, columnspan=4, sticky="ew", padx=dims['margin'], pady=(dims['margin'], 0))
         self.entry.config(state=DISABLED)
 
         self.create_buttons()
@@ -452,23 +486,65 @@ class Kalpy:
     def on_leave(self, e):
         e.widget['background'] = e.widget.base_color
 
-    def create_buttons(self): # Mapping: [text, x, y, command]
-        height = 78
-        from_point = 92
+    def create_buttons(self):
+        # Create a frame for all buttons with external padding
+        button_frame = Frame(self.root, bg=colors['dark'])
+        button_frame.grid(row=2, column=0, columnspan=4, rowspan=5, sticky="nsew", 
+                         padx=dims['margin'], pady=dims['margin'])
+        
+        # Configure grid weights for the button frame
+        for i in range(4):
+            button_frame.grid_columnconfigure(i, weight=1)
+        for i in range(5):
+            button_frame.grid_rowconfigure(i, weight=1)
+        
+        # Configure main window grid weights
+        for i in range(4):
+            self.root.grid_columnconfigure(i, weight=1)
+        for i in range(7):
+            self.root.grid_rowconfigure(i, weight=1)
+
+        # Button configuration: [text, row, col, command, colspan]
         btn_info = [
-            ("C", margin, from_point, self.clear), ("<", height+1, from_point, self.delete_char), ("%", height*2+1, from_point, self.percentage), ("÷", height*3, from_point, lambda: self.store_op("div")),
-            ("7", margin, from_point+height, lambda: self.insert_char('7')), ("8", height+1, from_point+height, lambda: self.insert_char('8')), ("9", height*2+1, from_point+height, lambda: self.insert_char('9')), ("×", height*3+1, from_point+height, lambda: self.store_op("mul")),
-            ("4", margin, from_point+height*2, lambda: self.insert_char('4')), ("5", height+1, from_point+height*2, lambda: self.insert_char('5')), ("6", height*2+1, from_point+height*2, lambda: self.insert_char('6')), (" -", height*3+1, from_point+height*2, lambda: self.store_op("sub")),
-            ("1", margin, from_point+height*3, lambda: self.insert_char('1')), ("2", height+1, from_point+height*3, lambda: self.insert_char('2')), ("3", height*2+1, from_point+height*3, lambda: self.insert_char('3')), ("+", height*3+1, from_point+height*3, lambda: self.store_op("add")),
-            ("±", margin, from_point+height*4, self.sign), ("0", height+1, from_point+height*4, lambda: self.insert_char('0')), (" . ", height*2+1, from_point+height*4, self.insert_point), ("=", height*3+1, from_point+height*4, self.calculate)
+            ("C", 0, 0, self.clear, 1), ("<", 0, 1, self.delete_char, 1), ("%", 0, 2, self.percentage, 1), ("÷", 0, 3, lambda: self.store_op("div"), 1),
+            ("7", 1, 0, lambda: self.insert_char('7'), 1), ("8", 1, 1, lambda: self.insert_char('8'), 1), ("9", 1, 2, lambda: self.insert_char('9'), 1), ("×", 1, 3, lambda: self.store_op("mul"), 1),
+            ("4", 2, 0, lambda: self.insert_char('4'), 1), ("5", 2, 1, lambda: self.insert_char('5'), 1), ("6", 2, 2, lambda: self.insert_char('6'), 1), ("-", 2, 3, lambda: self.store_op("sub"), 1),
+            ("1", 3, 0, lambda: self.insert_char('1'), 1), ("2", 3, 1, lambda: self.insert_char('2'), 1), ("3", 3, 2, lambda: self.insert_char('3'), 1), ("+", 3, 3, lambda: self.store_op("add"), 1),
+            ("±", 4, 0, self.sign, 1), ("0", 4, 1, lambda: self.insert_char('0'), 1), (".", 4, 2, self.insert_point, 1), ("=", 4, 3, self.calculate, 1)
         ]
 
-        for text, x, y, cmd in btn_info:
+        # Buttons config
+        button_font = ('sans-serif', dims['font_size'])
+        for text, row, col, cmd, colspan in btn_info:
             init_color = self.get_color(text)
-            btn = Button(self.root, text=text, command=cmd, padx=29 if text=="÷" else 28, pady=23, bd=0, font=('sans-serif', 14),
-                   bg=init_color, fg=colors['dark'] if text == "=" else colors['light'], activebackground=colors['dark'], activeforeground=colors['semi-light'])
+            
+            btn = Button(
+                button_frame, 
+                text=text, 
+                command=cmd, 
+                bd=0, 
+                font=button_font,
+                bg=init_color, 
+                fg=colors['dark'] if text == "=" else colors['light'], 
+                activebackground=colors['dark'], 
+                activeforeground=colors['semi-light'],
+                width=8,
+                height=2
+            )
             btn.base_color = init_color
-            btn.place(x=x, y=y)
+            
+            # Use grid layout with padding
+            btn.grid(
+                row=row, 
+                column=col, 
+                columnspan=colspan,
+                sticky="nsew",
+                padx=0, 
+                pady=0,
+                ipadx=5, # Internal padding
+                ipady=5  # Internal padding
+            )
+            
             btn.bind("<Enter>", self.on_enter)
             btn.bind("<Leave>", self.on_leave)
 
@@ -480,5 +556,5 @@ class Kalpy:
     
 if __name__ == "__main__":
     root = Tk()
-    Kalpy(root)
+    app = Kalpy(root)
     root.mainloop()
