@@ -1,9 +1,11 @@
+<p align="center">
+  <img src="src/logo.png" alt="Kalpy logo" width="96" />
+  <img src="src/logo_inv.png" alt="Kalpy logo invert" width="96" />
+</p>
+
 # Kalpy
 
 Kalpy is a lightweight calculator that reimagines the Windows 10 basic mode with a sleek, modern Material Design interface.
-
-## Logo
-<img src="src/logo.png" alt="Kalpy logo" width="64"> <img src="src/logo_inv.png" alt="Kalpy logo invert" width="64">
 
 ## UI
 ### Windows
